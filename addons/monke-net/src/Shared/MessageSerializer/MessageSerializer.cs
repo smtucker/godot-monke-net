@@ -1,6 +1,10 @@
-using MonkeNet.NetworkMessages;
+using Godot;
+using MonkeNet.Shared;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 
 namespace MonkeNet.Serializer;
 
@@ -23,7 +27,7 @@ public interface IPackableElement : IPackableMessage
 
 public class MessageSerializer
 {
-    public static readonly Dictionary<byte, IPackableMessage> Types = [];
+    private static readonly Dictionary<IPackableMessage, byte> Types = [];
 
     /// <summary>
     /// Takes a IPackableMessage <paramref name="message"/> and packs it into a byte array as <paramref name="messageType"/>.
@@ -31,12 +35,12 @@ public class MessageSerializer
     /// <param name="type"></param>
     /// <param name="message"></param>
     /// <returns></returns>
-    public static byte[] Serialize(MessageTypeEnum messageType, IPackableMessage message)
+    public static byte[] Serialize(IPackableMessage message)
     {
         using var stream = new MemoryStream();
         using var writer = new MessageWriter(stream);
 
-        writer.Write((byte)messageType);
+        writer.Write(GetByteTypeFromMessage(message));
         message.WriteBytes(writer);
         return stream.ToArray();
     }
@@ -54,10 +58,54 @@ public class MessageSerializer
         byte typeByte = reader.ReadByte();
 
         // Get instance of the message and "fill it"
-        IPackableMessage instance = Types[typeByte];
+        IPackableMessage instance = GetMessageFromByteType(typeByte);
         instance.ReadBytes(reader);
 
         // Return the struct, essentialy creating a copy of it (in c# structs are passed by value)
         return instance;
+    }
+
+    //TODO: this should bo some type of hash map, not this foreach shit
+    public static IPackableMessage GetMessageFromByteType(byte type)
+    {
+        foreach (var t in Types)
+        {
+            if (t.Value == type) return t.Key;
+        }
+
+        throw new MonkeNetException($"Couldn't find type {type}");
+    }
+
+    //TODO: this should bo some type of hash map, not this foreach shit
+    public static byte GetByteTypeFromMessage(IPackableMessage message)
+    {
+        foreach (var t in Types)
+        {
+            if (t.Key.GetType() == message.GetType()) return t.Value;
+        }
+
+        throw new MonkeNetException($"Couldn't find message {message}");
+    }
+
+    // Scans the assembly and registers all Messages for the MessageSerializer
+    public static void RegisterNetworkMessages()
+    {
+        Type[] registeredMessages = GetTypesImplementingInterface(typeof(IPackableMessage));
+        byte key = 0;
+
+        foreach (Type t in registeredMessages)
+        {
+            var messageInstance = Activator.CreateInstance(t) as IPackableMessage;
+            Types.Add(messageInstance, key++);
+            GD.Print($"Registered network message {t.FullName}");
+        }
+    }
+
+    private static Type[] GetTypesImplementingInterface(Type type)
+    {
+        return Assembly.GetExecutingAssembly()
+                       .GetTypes()
+                       .Where(t => type.IsAssignableFrom(t) && !t.IsAbstract)
+                       .ToArray();
     }
 }

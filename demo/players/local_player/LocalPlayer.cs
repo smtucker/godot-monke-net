@@ -1,13 +1,12 @@
 using Godot;
-using MonkeNet;
 using MonkeNet.Client;
+using MonkeNet.Serializer;
 using MonkeNet.Shared;
 
 namespace GameDemo;
 
-public partial class LocalPlayer : CharacterBody3D, IPredictableEntity, IInputProducer
+public partial class LocalPlayer : CharacterBody3D, IPredictableEntity
 {
-    [Export] private FirstPersonCameraController _cameraController;
     [Export] private float _maxDeviationAllowedSquared = 0.001f;
     [Export] private SharedPlayerMovement _playerMovement;
 
@@ -15,32 +14,14 @@ public partial class LocalPlayer : CharacterBody3D, IPredictableEntity, IInputPr
     public byte EntityType { get; set; }
     public int Authority { get; set; }
 
-    public override void _Ready()
-    {
-        // Set this node as the input producer, this means that MonkeNet's client manager will
-        // use this nodes GetCurrenInput() method to generate inputs for the server
-        MonkeNetConfig.Instance.InputProducer = this;
-    }
-
     // Called every physics tick (but synced to network clock)
-    public void OnProcessTick(int tick, int remoteTick, IClientInputData genericInput)
+    public void OnProcessTick(int tick, int remoteTick, IPackableElement input)
     {
-        CharacterInputMessage input = (CharacterInputMessage)genericInput;
-        _playerMovement.AdvancePhysics(input);
-    }
-
-    // Generates input message client will send to server
-    public IClientInputData GetCurrentInput()
-    {
-        return new CharacterInputMessage
-        {
-            Keys = GetCurrentPressedKeys(),
-            CameraYaw = _cameraController.GetLateralRotationAngle()
-        };
+        _playerMovement.AdvancePhysics((CharacterInputMessage)input);
     }
 
     // We have misspredicted, return player back to authoritative position
-    public void HandleReconciliation(IEntityStateMessage receivedState)
+    public void HandleReconciliation(IEntityStateData receivedState)
     {
         EntityStateMessage state = (EntityStateMessage)receivedState;
         this.Position = state.Position;
@@ -48,27 +29,15 @@ public partial class LocalPlayer : CharacterBody3D, IPredictableEntity, IInputPr
     }
 
     // Check if we have misspredicted
-    public bool HasMisspredicted(IEntityStateMessage receivedState, Vector3 savedPosition)
+    public bool HasMisspredicted(IEntityStateData receivedState, Vector3 savedPosition)
     {
         EntityStateMessage state = (EntityStateMessage)receivedState;
         return (state.Position - savedPosition).LengthSquared() > _maxDeviationAllowedSquared;
     }
 
     // When the client is re-simulating inputs, what should we do with it? usually the same we do on process tick
-    public void ResimulateTick(IClientInputData input)
+    public void ResimulateTick(IPackableElement input)
     {
         _playerMovement.AdvancePhysics((CharacterInputMessage)input);
-    }
-
-    private static byte GetCurrentPressedKeys()
-    {
-        byte keys = 0;
-        if (Input.IsActionPressed("right")) keys |= (byte)InputFlags.Right;
-        if (Input.IsActionPressed("left")) keys |= (byte)InputFlags.Left;
-        if (Input.IsActionPressed("forward")) keys |= (byte)InputFlags.Forward;
-        if (Input.IsActionPressed("backward")) keys |= (byte)InputFlags.Backward;
-        if (Input.IsActionPressed("space")) keys |= (byte)InputFlags.Space;
-        if (Input.IsActionPressed("shift")) keys |= (byte)InputFlags.Shift;
-        return keys;
     }
 }

@@ -1,6 +1,6 @@
 [gd_scene load_steps=12 format=3 uid="uid://cfx1rqvxuku42"]
 
-[ext_resource type="Script" path="res://demo/players/dummy_player/DummyPlayer.cs" id="1_0vlpo"]
+[ext_resource type="Script" uid="uid://bcf3spnmxk1j6" path="res://demo/players/dummy_player/DummyPlayer.cs" id="1_0vlpo"]
 [ext_resource type="PackedScene" uid="uid://bsg5g6qsvepfc" path="res://resources/Knight.glb" id="1_7a525"]
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_kv5mh"]

@@ -1,24 +1,27 @@
 [gd_scene load_steps=5 format=3 uid="uid://bog1us6frffkj"]
 
-[ext_resource type="Script" path="res://addons/monke-net/src/ServerSide/ServerManager.cs" id="1_sjtyc"]
-[ext_resource type="Script" path="res://addons/monke-net/src/ServerSide/ServerNetworkClock.cs" id="2_jgjwk"]
-[ext_resource type="Script" path="res://addons/monke-net/src/ServerSide/Entities/ServerEntityManager.cs" id="3_e5hxh"]
-[ext_resource type="Script" path="res://addons/monke-net/src/ServerSide/ServerInputReceiver.cs" id="4_ktnf1"]
+[ext_resource type="Script" uid="uid://mblm23tbcj6s" path="res://addons/monke-net/src/ServerSide/ServerManager.cs" id="1_sjtyc"]
+[ext_resource type="Script" uid="uid://y4oqtpls34mr" path="res://addons/monke-net/src/ServerSide/InternalComponents/ServerNetworkClock.cs" id="2_jgjwk"]
+[ext_resource type="Script" uid="uid://b6notwourqxgf" path="res://addons/monke-net/src/ServerSide/InternalComponents/ServerEntityManager.cs" id="3_e5hxh"]
+[ext_resource type="Script" uid="uid://c3qoup1ef6qx2" path="res://addons/monke-net/src/ServerSide/InternalComponents/ServerInputReceiver.cs" id="4_ktnf1"]
 
 [node name="ServerManager" type="Node"]
 script = ExtResource("1_sjtyc")
 
-[node name="ServerClock" type="Node" parent="."]
-script = ExtResource("2_jgjwk")
-
-[node name="EntityManager" type="Node" parent="."]
+[node name="ServerEntityManager" type="Node" parent="."]
 script = ExtResource("3_e5hxh")
+metadata/_custom_type_script = "uid://b6notwourqxgf"
 
-[node name="InputReceiver" type="Node" parent="."]
+[node name="ServerInputReceiver" type="Node" parent="."]
 script = ExtResource("4_ktnf1")
+metadata/_custom_type_script = "uid://c3qoup1ef6qx2"
 
-[node name="Timer" type="Timer" parent="."]
+[node name="ServerNetworkClock" type="Node" parent="."]
+script = ExtResource("2_jgjwk")
+metadata/_custom_type_script = "uid://y4oqtpls34mr"
+
+[node name="Timer" type="Timer" parent="ServerNetworkClock"]
 wait_time = 5.0
 autostart = true
 
-[connection signal="timeout" from="Timer" to="." method="OnTimerTimeout"]
+[connection signal="timeout" from="ServerNetworkClock/Timer" to="ServerNetworkClock" method="OnTimerTimeout"]

@@ -1,10 +1,10 @@
 [gd_scene load_steps=8 format=3 uid="uid://rauc3mu03xvj"]
 
-[ext_resource type="Script" path="res://demo/MainScene.cs" id="1_a3xwa"]
-[ext_resource type="Script" path="res://addons/monke-net/src/Shared/MonkeNetManager/MonkeNetConfig.cs" id="2_3laxn"]
+[ext_resource type="Script" uid="uid://b26awixuhuq6l" path="res://demo/MainScene.cs" id="1_a3xwa"]
+[ext_resource type="Script" uid="uid://dh3ajfu6hll6t" path="res://addons/monke-net/src/Shared/MonkeNetManager/MonkeNetConfig.cs" id="2_3laxn"]
 [ext_resource type="Material" uid="uid://bqguau4l77phy" path="res://demo/map/Obstacles1.tres" id="2_kwgue"]
 [ext_resource type="Environment" uid="uid://c5xw5iwomn8qo" path="res://demo/map/DefaultEnvironment.tres" id="4_4tv7j"]
-[ext_resource type="Script" path="res://demo/GameEntitySpawner.cs" id="4_7cfa4"]
+[ext_resource type="Script" uid="uid://b71f06wr0o6iq" path="res://demo/GameEntitySpawner.cs" id="4_7cfa4"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lcinv"]
 albedo_color = Color(0.101961, 0.101961, 0.101961, 1)

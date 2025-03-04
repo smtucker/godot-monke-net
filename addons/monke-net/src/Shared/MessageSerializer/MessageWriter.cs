@@ -6,14 +6,34 @@ namespace MonkeNet.Serializer;
 public class MessageWriter(MemoryStream stream) : BinaryWriter(stream)
 {
     /// <summary>
-    /// Packs a List of a IPackableMessage into the stream, will also use 4 bytes for the list size
+    /// Packs a List of a IPackableMessage into the stream. Will use 4 bytes for the list size and 1 extra byte for each element type.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="data"></param>
     public void Write(IPackableMessage[] data)
     {
         Write(data.Length);
-        for (int i = 0; i < data.Length; i++) { data[i].WriteBytes(this); }
+        for (int i = 0; i < data.Length; i++)
+        {
+            Write(MessageSerializer.GetByteTypeFromMessage(data[i]));
+            data[i].WriteBytes(this);
+        }
+    }
+
+    /// <summary>
+    /// Packs a List of a IPackableMessage into the stream. Will use 4 bytes for the list size and 1 extra byte the list type.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="data"></param>
+    public void WriteSingleTypeArray(IPackableMessage[] data)
+    {
+        Write(data.Length);
+        Write(MessageSerializer.GetByteTypeFromMessage(data[0])); //TODO: data[0] what?
+
+        for (int i = 0; i < data.Length; i++)
+        {
+            data[i].WriteBytes(this);
+        }
     }
 
     public void Write(Vector3 vector)

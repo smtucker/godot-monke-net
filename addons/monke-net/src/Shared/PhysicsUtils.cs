@@ -7,6 +7,7 @@ public class PhysicsUtils
     public static readonly float FrameTimeInMsec = (1.0f / Engine.PhysicsTicksPerSecond) * 1000.0f;
     public static readonly float DeltaTime = 1.0f / Engine.PhysicsTicksPerSecond;
 
+    public static readonly Vector3 HorizontalVector = new Vector3(1, 0, 1);
     public static int MsecToTick(int msec)
     {
         return Mathf.CeilToInt(msec / FrameTimeInMsec);
@@ -33,5 +34,15 @@ public class PhysicsUtils
 
         // if (!physicsProcess)
         body.ForceUpdateTransform(); // Flush changes to the PhysicsServer
+    }
+
+    public static byte EncodeRadianAngleAsByte(float angle)
+    {
+        return (byte)((angle / Mathf.Tau) * byte.MaxValue);
+    }
+
+    public static float DecodeRadianAngleAsByte(byte angle)
+    {
+        return (float)angle / byte.MaxValue * Mathf.Tau;
     }
 }

@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://hh18mdgclbq6"]
 
-[ext_resource type="Script" path="res://demo/players/server_player/ServerPlayer.cs" id="1_cinm7"]
-[ext_resource type="Script" path="res://demo/players/SharedPlayerMovement.cs" id="2_miufo"]
+[ext_resource type="Script" uid="uid://c17et2fp804qw" path="res://demo/players/server_player/ServerPlayer.cs" id="1_cinm7"]
+[ext_resource type="Script" uid="uid://cnv1cfcupuk13" path="res://demo/players/SharedPlayerMovement.cs" id="2_miufo"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_ysstd"]
 

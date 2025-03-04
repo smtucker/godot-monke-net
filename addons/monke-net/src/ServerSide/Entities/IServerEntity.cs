@@ -9,5 +9,5 @@ namespace MonkeNet.Server;
 public interface IServerEntity : INetworkedEntity
 {
     public abstract void OnProcessTick(int tick, IPackableElement input);
-    public IEntityStateMessage GenerateCurrentStateMessage();
+    public IEntityStateData GenerateCurrentStateMessage();
 }

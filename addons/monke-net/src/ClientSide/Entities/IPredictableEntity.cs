@@ -1,4 +1,5 @@
 using Godot;
+using MonkeNet.Serializer;
 using MonkeNet.Shared;
 
 namespace MonkeNet.Client;
@@ -6,7 +7,7 @@ namespace MonkeNet.Client;
 public interface IPredictableEntity : IClientEntity
 {
     public Vector3 Position { get; set; }
-    public bool HasMisspredicted(IEntityStateMessage receivedState, Vector3 savedState);
-    public void HandleReconciliation(IEntityStateMessage receivedState);
-    public void ResimulateTick(IClientInputData input);
+    public bool HasMisspredicted(IEntityStateData receivedState, Vector3 savedState);
+    public void HandleReconciliation(IEntityStateData receivedState);
+    public void ResimulateTick(IPackableElement input);
 }

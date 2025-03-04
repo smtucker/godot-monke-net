@@ -1,3 +1,4 @@
+using Godot;
 using MonkeNet.Serializer;
 using MonkeNet.Shared;
 
@@ -13,24 +14,13 @@ public enum ChannelEnum : int
 {
     Snapshot,
     Clock,
-    EntityEvent,
-    ClientInput
+    EntityEventMessage,
+    ClientInput,
+    GameReliable,
+    GameUnreliable
 }
 
-public enum MessageTypeEnum : byte
-{
-    EntityRequest,
-    ClockSync,
-    EntityEvent,
-    EntityState,
-    GameSnapshot,
-    PackedClientInputs,
-    ClientInputData,
-    ButtonData // TODO: wtf why do I have to define this here?
-}
-
-[RegisterMessage(MessageTypeEnum.EntityRequest, typeof(EntityRequest))]
-public struct EntityRequest : IPackableMessage
+public struct EntityRequestMessage : IPackableMessage
 {
     public required byte EntityType { get; set; }
 
@@ -45,8 +35,7 @@ public struct EntityRequest : IPackableMessage
     }
 }
 
-[RegisterMessage(MessageTypeEnum.ClockSync, typeof(ClockSync))]
-public struct ClockSync : IPackableMessage
+public struct ClockSyncMessage : IPackableMessage
 {
     public required int ClientTime { get; set; }
     public required int ServerTime { get; set; }
@@ -64,13 +53,13 @@ public struct ClockSync : IPackableMessage
     }
 }
 
-[RegisterMessage(MessageTypeEnum.EntityEvent, typeof(EntityEvent))]
-public struct EntityEvent : IPackableMessage
+public struct EntityEventMessage : IPackableMessage
 {
     public required EntityEventEnum Event { get; set; }
     public required int EntityId { get; set; }
     public required byte EntityType { get; set; }
     public required int Authority { get; set; }
+    public Vector3 Position { get; set; }
 
     public void ReadBytes(MessageReader reader)
     {
@@ -78,6 +67,7 @@ public struct EntityEvent : IPackableMessage
         EntityId = reader.ReadInt32();
         EntityType = reader.ReadByte();
         Authority = reader.ReadInt32();
+        Position = reader.ReadVector3();
     }
 
     public readonly void WriteBytes(MessageWriter writer)
@@ -86,15 +76,15 @@ public struct EntityEvent : IPackableMessage
         writer.Write(EntityId);
         writer.Write(EntityType);
         writer.Write(Authority);
+        writer.Write(Position);
     }
 
 }
 
-[RegisterMessage(MessageTypeEnum.GameSnapshot, typeof(GameSnapshot))]
-public struct GameSnapshot : IPackableMessage
+public struct GameSnapshotMessage : IPackableMessage
 {
     public required int Tick { get; set; }
-    public IEntityStateMessage[] States { get; set; }
+    public IEntityStateData[] States { get; set; }
 
     public readonly void WriteBytes(MessageWriter writer)
     {
@@ -105,12 +95,11 @@ public struct GameSnapshot : IPackableMessage
     public void ReadBytes(MessageReader reader)
     {
         Tick = reader.ReadInt32();
-        States = reader.ReadArray<IEntityStateMessage>(MessageTypeEnum.EntityState);
+        States = reader.ReadArray<IEntityStateData>();
     }
 }
 
-[RegisterMessage(MessageTypeEnum.PackedClientInputs, typeof(PackedClientInputs))]
-public struct PackedClientInputs : IPackableMessage
+public struct PackedClientInputMessage : IPackableMessage
 {
     public required int Tick { get; set; } // This is the Tick stamp for the latest generated input (Inputs[Inputs.Length]), all other Ticks are (Tick - index)
     public IPackableElement[] Inputs { get; set; }
@@ -118,12 +107,12 @@ public struct PackedClientInputs : IPackableMessage
     public readonly void WriteBytes(MessageWriter writer)
     {
         writer.Write(Tick);
-        writer.Write(Inputs);
+        writer.WriteSingleTypeArray(Inputs);
     }
 
     public void ReadBytes(MessageReader reader)
     {
         Tick = reader.ReadInt32();
-        Inputs = reader.ReadArray<IPackableElement>(MessageTypeEnum.ClientInputData);
+        Inputs = reader.ReadSingleTypeArray<IPackableElement>();
     }
 }

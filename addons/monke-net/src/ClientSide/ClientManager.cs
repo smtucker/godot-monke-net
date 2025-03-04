@@ -1,6 +1,5 @@
 using Godot;
 using ImGuiNET;
-using MonkeNet.NetworkMessages;
 using MonkeNet.Serializer;
 using MonkeNet.Shared;
 
@@ -26,7 +25,7 @@ public partial class ClientManager : Node
     private NetworkDebug _networkDebug;
     private ClientEntityManager _entityManager;
     private ClientInputManager _inputManager;
-    private SnapshotRollbacker _snapshotRollbacker;
+    private PredictionManager _PredictionManager;
 
     private bool _networkReady = false;
 
@@ -38,11 +37,11 @@ public partial class ClientManager : Node
     public override void _Ready()
     {
         _networkDebug = GetNode<NetworkDebug>("NetworkDebug");
-        _clock = GetNode<ClientNetworkClock>("ClientClock");
+        _clock = GetNode<ClientNetworkClock>("ClientNetworkClock");
         _snapshotInterpolator = GetNode<SnapshotInterpolator>("SnapshotInterpolator");
-        _entityManager = GetNode<ClientEntityManager>("EntityManager");
-        _inputManager = GetNode<ClientInputManager>("InputManager");
-        _snapshotRollbacker = GetNode<SnapshotRollbacker>("SnapshotRollbacker");
+        _entityManager = GetNode<ClientEntityManager>("ClientEntityManager");
+        _inputManager = GetNode<ClientInputManager>("ClientInputManager");
+        _PredictionManager = GetNode<PredictionManager>("PredictionManager");
     }
 
     public override void _Process(double delta)
@@ -61,17 +60,17 @@ public partial class ClientManager : Node
         int currentRemoteTick = _clock.GetCurrentRemoteTick();
 
         var input = _inputManager.GenerateAndTransmitInputs(currentRemoteTick);         // Read and send produced input to the server
-        EntitiesCallProcessTick(currentTick, currentRemoteTick, input);                                    // Call OnProcessTick on all entities, pass current input so they can simulate
+        EntitiesCallProcessTick(currentTick, currentRemoteTick, input);                 // Call OnProcessTick on all entities, pass current input so they can simulate
         EmitSignal(SignalName.ClientTick, currentTick, currentRemoteTick);
 
-        PhysicsServer3D.Singleton.Call("space_step", MonkeNetManager.Instance.PhysicsSpace, PhysicsUtils.DeltaTime);
-        PhysicsServer3D.Singleton.Call("space_flush_queries", MonkeNetManager.Instance.PhysicsSpace);
+        JoltPhysicsServer3D.GetSingleton().SpaceStep(MonkeNetManager.Instance.PhysicsSpace, PhysicsUtils.DeltaTime);
+        JoltPhysicsServer3D.GetSingleton().SpaceFlushQueries(MonkeNetManager.Instance.PhysicsSpace);
 
-        _snapshotRollbacker.RegisterPrediction(currentRemoteTick, input);               // Register all local predictions
+        _PredictionManager.RegisterPrediction(currentRemoteTick, input);               // Register all local predictions
     }
 
     // Calls OnProcessTick on all entities
-    private static void EntitiesCallProcessTick(int currentTick, int remoteTick, IClientInputData input)
+    private static void EntitiesCallProcessTick(int currentTick, int remoteTick, IPackableElement input)
     {
         foreach (var node in MonkeNetConfig.Instance.EntitySpawner.Entities)
         {
@@ -95,9 +94,9 @@ public partial class ClientManager : Node
         GD.Print("Client Manager Initialized");
     }
 
-    public void SendCommandToServer(MessageTypeEnum type, IPackableMessage command, INetworkManager.PacketModeEnum mode, int channel)
+    public void SendCommandToServer(IPackableMessage command, INetworkManager.PacketModeEnum mode, int channel)
     {
-        byte[] bin = MessageSerializer.Serialize(type, command);
+        byte[] bin = MessageSerializer.Serialize(command);
         _networkManager.SendBytes(bin, 1, channel, mode);
     }
 
@@ -140,7 +139,7 @@ public partial class ClientManager : Node
             _networkDebug.DisplayDebugInformation();
             _snapshotInterpolator.DisplayDebugInformation();
             _inputManager.DisplayDebugInformation();
-            _snapshotRollbacker.DisplayDebugInformation();
+            _PredictionManager.DisplayDebugInformation();
             ImGui.End();
         }
     }

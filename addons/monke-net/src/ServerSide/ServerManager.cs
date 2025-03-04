@@ -1,6 +1,5 @@
 using Godot;
 using ImGuiNET;
-using MonkeNet.NetworkMessages;
 using MonkeNet.Serializer;
 using MonkeNet.Shared;
 
@@ -36,8 +35,8 @@ public partial class ServerManager : Node
 
     public override void _Ready()
     {
-        _entityManager = GetNode<ServerEntityManager>("EntityManager");
-        _inputReceiver = GetNode<ServerInputReceiver>("InputReceiver");
+        _entityManager = GetNode<ServerEntityManager>("ServerEntityManager");
+        _inputReceiver = GetNode<ServerInputReceiver>("ServerInputReceiver");
     }
 
     public override void _Process(double delta)
@@ -57,8 +56,8 @@ public partial class ServerManager : Node
 
         _inputReceiver.DropOutdatedInputs(_currentTick); // Delete all inputs that we don't need anymore
 
-        PhysicsServer3D.Singleton.Call("space_step", MonkeNetManager.Instance.PhysicsSpace, PhysicsUtils.DeltaTime);
-        PhysicsServer3D.Singleton.Call("space_flush_queries", MonkeNetManager.Instance.PhysicsSpace);
+        JoltPhysicsServer3D.GetSingleton().SpaceStep(MonkeNetManager.Instance.PhysicsSpace, PhysicsUtils.DeltaTime);
+        JoltPhysicsServer3D.GetSingleton().SpaceFlushQueries(MonkeNetManager.Instance.PhysicsSpace);
 
         _entityManager.SendSnapshotData(_currentTick);
     }
@@ -93,7 +92,7 @@ public partial class ServerManager : Node
     {
         _networkManager = networkManager;
 
-        _serverClock = GetNode<ServerNetworkClock>("ServerClock");
+        _serverClock = GetNode<ServerNetworkClock>("ServerNetworkClock");
         _serverClock.NetworkProcessTick += OnNetworkProcess;
 
         _networkManager.CreateServer(port);
@@ -104,9 +103,9 @@ public partial class ServerManager : Node
         GD.Print("Initialized Server Manager");
     }
 
-    public void SendCommandToClient(MessageTypeEnum type, int clientId, IPackableMessage command, INetworkManager.PacketModeEnum mode, int channel)
+    public void SendCommandToClient(int clientId, IPackableMessage command, INetworkManager.PacketModeEnum mode, int channel)
     {
-        byte[] bin = MessageSerializer.Serialize(type, command);
+        byte[] bin = MessageSerializer.Serialize(command);
         _networkManager.SendBytes(bin, clientId, channel, mode);
     }
 
@@ -145,6 +144,7 @@ public partial class ServerManager : Node
             ImGui.Text($"Framerate {Engine.GetFramesPerSecond()}fps");
             ImGui.Text($"Physics Tick {Engine.PhysicsTicksPerSecond}hz");
             _serverClock.DisplayDebugInformation();
+            _inputReceiver.DisplayDebugInformation();
             ImGui.End();
         }
 
