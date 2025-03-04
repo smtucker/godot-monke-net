@@ -22,7 +22,7 @@ public partial class ServerPlayer : CharacterBody3D, INetworkedEntity, IServerEn
     }
 
     // Capture current entity state, sent by the Server Entity Manager to all clients
-    public IEntityStateMessage GenerateCurrentStateMessage()
+    public IEntityStateData GenerateCurrentStateMessage()
     {
         return new EntityStateMessage
         {

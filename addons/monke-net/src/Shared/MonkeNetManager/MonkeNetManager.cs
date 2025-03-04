@@ -1,9 +1,5 @@
 using Godot;
-using MonkeNet.NetworkMessages;
 using MonkeNet.Serializer;
-using System;
-using System.Linq;
-using System.Reflection;
 
 namespace MonkeNet.Shared;
 
@@ -14,10 +10,13 @@ public partial class MonkeNetManager : Node
     public Rid PhysicsSpace { get; private set; }
 
     private INetworkManager _networkManager;
+
     public override void _EnterTree()
     {
+        Instance = this;
         PhysicsSpace = GetViewport().World3D.Space;
         PhysicsServer3D.SpaceSetActive(PhysicsSpace, false); // MonkeNet advances physics manually
+        MessageSerializer.RegisterNetworkMessages();
     }
 
     public override void _Ready()
@@ -26,8 +25,6 @@ public partial class MonkeNetManager : Node
             throw new MonkeNetException("Missing MonkeNetConfig instance!");
 
         _networkManager = GetNode("NetworkManagerEnet") as INetworkManager;
-        RegisterNetworkMessages();
-        Instance = this;
     }
 
     public void CreateClient(string address, int port)
@@ -36,6 +33,11 @@ public partial class MonkeNetManager : Node
         var clientManagerScene = GD.Load<PackedScene>("res://addons/monke-net/scenes/ClientManager.tscn");
         var clientManager = clientManagerScene.Instantiate() as Client.ClientManager;
         AddChild(clientManager);
+
+        if (MonkeNetConfig.Instance.CustomClientScene != null)
+        {
+            MonkeNetConfig.Instance.AddChild(MonkeNetConfig.Instance.CustomClientScene.Instantiate());
+        }
 
         // TODO: pass configurations as struct/.ini
         clientManager.Initialize(_networkManager, address, port);
@@ -48,25 +50,12 @@ public partial class MonkeNetManager : Node
         var serverManager = serverManagerScene.Instantiate() as Server.ServerManager;
         AddChild(serverManager);
 
+        if (MonkeNetConfig.Instance.CustomServerScene != null)
+        {
+            MonkeNetConfig.Instance.AddChild(MonkeNetConfig.Instance.CustomServerScene.Instantiate());
+        }
+
         // TODO: pass configurations as struct/.ini
         serverManager.Initialize(_networkManager, port);
-    }
-
-    // Scans the assembly and registers all Messages for the MessageSerializer
-    private static void RegisterNetworkMessages()
-    {
-        Assembly assembly = Assembly.GetExecutingAssembly();
-        var types = assembly.GetTypes().Where(t => typeof(IPackableMessage).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
-
-        foreach (var t in types)
-        {
-            var attrib = Attribute.GetCustomAttribute(t, typeof(RegisterMessageAttribute)) ??
-                throw new MonkeNetException($"The type {t.FullName} doesn't have the {typeof(RegisterMessageAttribute).Name} attribute!");
-
-            RegisterMessageAttribute registerMessageAttribute = (RegisterMessageAttribute)attrib;
-            var messageInstance = Activator.CreateInstance(t);
-            MessageSerializer.Types.Add((byte)registerMessageAttribute.MessageType, (IPackableMessage)messageInstance);
-            GD.Print($"Registered network message {t.FullName}");
-        }
     }
 }

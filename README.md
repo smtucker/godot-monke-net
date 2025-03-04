@@ -6,7 +6,7 @@ C# Godot Addon that facilitates creating robust multiplayer games using the Clie
 ---
 
 > [!WARNING]
-> MonkeNet uses its [own fork of Godot-Jolt](https://github.com/grazianobolla/godot-jolt) for networked physics, in this repository **I've only provided the binaries for Windows**, if you are on Mac/Linux you will have to compile Jolt yourself (it's a simple process)
+> VERY IMPORTANT! MonkeNet uses its [own fork of Godot!!!](https://github.com/grazianobolla/godot-monke) for networked physics!!! Right now due to current limitations on Godot Physics and the Jolt module it is almost impossible to step the physics world manually. I had to expose some internal Jolt methods that allow to do exactly that. Compile the `godot-monke` fork with C# bindings! It is a very simple and easy process, if you have any trouble join the discord channel and I'll help you out! The Godot-Monke fork will always aim at the latest stable release (currently Godot 4.4!), so everything will be the same as the official build for that version.
 
 ## 📚 Background
 After many years since my first attempt at making a functional multiplayer game, I came to one conclusion: developing multiplayer games is hard, specially when leaving the P2P architecture and opting for a more "competitive" approach like having an authoritative server. This project aims to provide a starting point that can be used to speed up the time it takes to go from idea to reality, utilizing its features like:
@@ -37,6 +37,7 @@ MonkeNet is structured in different "components" that are Nodes inside the Godot
 - `ClientEntityManager.cs` handles *requesting* an entity on the server while `ServerEntityManager.cs` actually takes that request and spawns the entity.
 - `ClientNetworkClock.cs` receives clock data from the server and updates its internal state, while the `ServerNetworkClock.cs` just runs a simple clock that increments each tick.
 
+## Components (OUTDATED)
 ### 🐵 MonkeNet Singleton
 The `MonkeNetManager` class is a singleton that can be used anywhere in your project and allows you to start either a server or a client.
 

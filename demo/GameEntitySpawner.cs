@@ -15,7 +15,7 @@ public partial class GameEntitySpawner : EntitySpawner
     }
 
     // When an entity is spawned, what should be done on the client side?
-    protected override Node HandleEntityCreationClientSide(EntityEvent @event)
+    protected override Node3D HandleEntityCreationClientSide(EntityEventMessage @event)
     {
         if (@event.EntityType == (byte)EntityType.Player)
         {
@@ -24,19 +24,19 @@ public partial class GameEntitySpawner : EntitySpawner
                 GD.Load<PackedScene>("res://demo/players/local_player/LocalPlayer.tscn") :
                 GD.Load<PackedScene>("res://demo/players/dummy_player/DummyPlayer.tscn");
 
-            return playerScene.Instantiate(); // Spawn player scene
+            return playerScene.Instantiate<Node3D>(); // Spawn player scene
         }
 
         throw new System.Exception("No Node was returned for Client Entity Creation event");
     }
 
     // When an entity is spawned, what should be done on the server side?
-    protected override Node HandleEntityCreationServerSide(EntityEvent @event)
+    protected override Node3D HandleEntityCreationServerSide(EntityEventMessage @event)
     {
         if (@event.EntityType == (byte)EntityType.Player)
         {
             PackedScene playerScene = GD.Load<PackedScene>("res://demo/players/server_player/ServerPlayer.tscn");
-            return playerScene.Instantiate(); // Spawn player scene
+            return playerScene.Instantiate<Node3D>(); // Spawn player scene
         }
 
         throw new System.Exception("No Node was returned for Server Entity Creation event");

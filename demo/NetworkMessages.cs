@@ -1,13 +1,11 @@
 ﻿using Godot;
-using MonkeNet.NetworkMessages;
 using MonkeNet.Serializer;
 using MonkeNet.Shared;
 
 namespace GameDemo;
 
 // Entity state sent by the server to all clients every time a snapshot is produced
-[RegisterMessage(MessageTypeEnum.EntityState, typeof(EntityStateMessage))]
-public struct EntityStateMessage : IEntityStateMessage
+public struct EntityStateMessage : IEntityStateData
 {
     public int EntityId { get; set; } // Entity Id
     public Vector3 Position { get; set; } // Entity Position
@@ -34,8 +32,7 @@ public struct EntityStateMessage : IEntityStateMessage
 }
 
 // Character inputs sent to the server by a local player every time a key is pressed
-[RegisterMessage(MessageTypeEnum.ClientInputData, typeof(CharacterInputMessage))]
-public struct CharacterInputMessage : IClientInputData
+public struct CharacterInputMessage : IPackableElement
 {
     public byte Keys { get; set; } // Single byte were each bit is a different pressed key
     public float CameraYaw { get; set; } // Yaw (were are we looking at)
