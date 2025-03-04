@@ -1,4 +1,5 @@
 using Godot;
+using ImGuiNET;
 using MonkeNet.Client;
 using MonkeNet.Serializer;
 using MonkeNet.Shared;
@@ -39,5 +40,14 @@ public partial class LocalPlayer : CharacterBody3D, IPredictableEntity
     public void ResimulateTick(IPackableElement input)
     {
         _playerMovement.AdvancePhysics((CharacterInputMessage)input);
+    }
+
+    public override void _Process(double delta)
+    {
+        if (ImGui.Begin("Player Information"))
+        {
+            ImGui.Text("Use `C` to free/capture your cursor.");
+            ImGui.End();
+        }
     }
 }
