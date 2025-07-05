@@ -10,15 +10,15 @@ script = ExtResource("1_sjtyc")
 
 [node name="ServerEntityManager" type="Node" parent="."]
 script = ExtResource("3_e5hxh")
-metadata/_custom_type_script = "uid://b6notwourqxgf"
+metadata/_custom_type_script = ExtResource("3_e5hxh")
 
 [node name="ServerInputReceiver" type="Node" parent="."]
 script = ExtResource("4_ktnf1")
-metadata/_custom_type_script = "uid://c3qoup1ef6qx2"
+metadata/_custom_type_script = ExtResource("4_ktnf1")
 
 [node name="ServerNetworkClock" type="Node" parent="."]
 script = ExtResource("2_jgjwk")
-metadata/_custom_type_script = "uid://y4oqtpls34mr"
+metadata/_custom_type_script = ExtResource("2_jgjwk")
 
 [node name="Timer" type="Timer" parent="ServerNetworkClock"]
 wait_time = 5.0

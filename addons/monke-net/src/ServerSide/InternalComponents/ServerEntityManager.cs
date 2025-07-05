@@ -103,7 +103,7 @@ public partial class ServerEntityManager : InternalServerComponent
         entityEvent.Position = instancedEntity.Position;
         //entityEvent.Rotation = instancedEntity.Rotation;
 
-        SendCommandToClient(targetId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEventMessage);
+        SendCommandToClient(targetId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
     }
 
     /// <summary>
@@ -123,7 +123,7 @@ public partial class ServerEntityManager : InternalServerComponent
 
         _entitySpawner.DestroyEntity(entityEvent);  // Execute event locally
 
-        SendCommandToClient(targetId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEventMessage);
+        SendCommandToClient(targetId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
     }
 
     /// <summary>
@@ -142,7 +142,7 @@ public partial class ServerEntityManager : InternalServerComponent
                 Authority = entity.Authority,
             };
 
-            SendCommandToClient(clientId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEventMessage);
+            SendCommandToClient(clientId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
         }
 
     }

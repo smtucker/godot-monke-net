@@ -26,7 +26,7 @@ public partial class ClientEntityManager : InternalClientComponent
             EntityType = entityType
         };
 
-        SendCommandToServer(req, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEventMessage);
+        SendCommandToServer(req, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
     }
 
     protected override void OnCommandReceived(IPackableMessage command)
