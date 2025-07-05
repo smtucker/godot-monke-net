@@ -14,7 +14,7 @@ public enum ChannelEnum : int
 {
     Snapshot,
     Clock,
-    EntityEventMessage,
+    EntityEvent,
     ClientInput,
     GameReliable,
     GameUnreliable
