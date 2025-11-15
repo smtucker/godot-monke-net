@@ -6,6 +6,16 @@ namespace GameDemo;
 
 public partial class MainScene : Node3D
 {
+	private static readonly string FLAG_DEDICATED_SERVER = "as_server";
+
+	public override void _Ready()
+	{
+		if (OS.HasFeature(FLAG_DEDICATED_SERVER))
+		{
+			MonkeNetManager.Instance.CreateServer(9999);
+		}
+	}
+
 	// When the client clicks "Spawn" we request the server to spawn a Player entity for us
 	private void OnSpawnButtonPressed()
 	{
