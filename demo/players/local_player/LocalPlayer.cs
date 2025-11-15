@@ -14,6 +14,8 @@ public partial class LocalPlayer : CharacterBody3D, IPredictableEntity
     public int EntityId { get; set; }
     public byte EntityType { get; set; }
     public int Authority { get; set; }
+    public string Metadata { get; set; }
+    public void EntitySpawned() { }
 
     // Called every physics tick (but synced to network clock)
     public void OnProcessTick(int tick, int remoteTick, IPackableElement input)
@@ -49,5 +51,10 @@ public partial class LocalPlayer : CharacterBody3D, IPredictableEntity
             ImGui.Text("Use `C` to free/capture your cursor.");
             ImGui.End();
         }
+    }
+
+    public void OnReceivedState(IEntityStateData receivedState)
+    {
+
     }
 }
