@@ -7,6 +7,7 @@ namespace GameDemo;
 // Dummy player (other players in the game)
 public partial class DummyPlayer : Node3D, INetworkedEntity, IInterpolatedEntity
 {
+    [Export] private Node3D _skeleton;
     [Export] private AnimationTree _animTree;
 
     public int EntityId { get; set; }
@@ -24,7 +25,7 @@ public partial class DummyPlayer : Node3D, INetworkedEntity, IInterpolatedEntity
 
         // Interpolate Yaw
         var rotation = Mathf.LerpAngle(pastState.Yaw, futureState.Yaw, interpolationFactor);
-        this.Rotation = Vector3.Up * rotation;
+        _skeleton.Rotation = Vector3.Up * -rotation;
 
         // Interpolate velocity
         Vector3 velocity = pastState.Velocity.Lerp(futureState.Velocity, interpolationFactor);
