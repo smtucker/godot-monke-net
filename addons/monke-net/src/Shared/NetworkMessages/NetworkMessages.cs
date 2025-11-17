@@ -60,6 +60,8 @@ public struct EntityEventMessage : IPackableMessage
     public required byte EntityType { get; set; }
     public required int Authority { get; set; }
     public Vector3 Position { get; set; }
+    public float Yaw { get; set; }
+    public string Metadata { get; set; } //TODO: his should contain Position, Yaw, etc all the other specific stuff
 
     public void ReadBytes(MessageReader reader)
     {
@@ -68,6 +70,8 @@ public struct EntityEventMessage : IPackableMessage
         EntityType = reader.ReadByte();
         Authority = reader.ReadInt32();
         Position = reader.ReadVector3();
+        Yaw = reader.ReadSingle();
+        Metadata = reader.ReadString();
     }
 
     public readonly void WriteBytes(MessageWriter writer)
@@ -77,6 +81,8 @@ public struct EntityEventMessage : IPackableMessage
         writer.Write(EntityType);
         writer.Write(Authority);
         writer.Write(Position);
+        writer.Write(Yaw);
+        writer.Write(Metadata);
     }
 
 }

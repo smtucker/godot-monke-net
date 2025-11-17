@@ -5,14 +5,17 @@ using MonkeNet.Shared;
 
 namespace GameDemo;
 
-public partial class ServerPlayer : CharacterBody3D, INetworkedEntity, IServerEntity
+public partial class ServerPlayer : CharacterBody3D, IServerSyncedEntity
 {
     [Export] private SharedPlayerMovement _playerMovement;
 
     public int EntityId { get; set; }
     public byte EntityType { get; set; }
     public int Authority { get; set; }
+    public string Metadata { get; set; }
     public float Yaw { get; set; }
+
+    public void EntitySpawned() { }
 
     public void OnProcessTick(int tick, IPackableElement genericInput)
     {
@@ -32,4 +35,5 @@ public partial class ServerPlayer : CharacterBody3D, INetworkedEntity, IServerEn
             Velocity = this.Velocity
         };
     }
+
 }

@@ -1,4 +1,5 @@
 ﻿using Godot;
+using ImGuiNET;
 using MonkeNet.NetworkMessages;
 using MonkeNet.Serializer;
 using MonkeNet.Shared;
@@ -14,6 +15,8 @@ public partial class ServerEntityManager : InternalServerComponent
 {
     private EntitySpawner _entitySpawner;
     private int _entityIdCount = 0;
+    private int _lastEntitiesPacked = 0;
+
     public override void _EnterTree()
     {
         _entitySpawner = MonkeNetConfig.Instance.EntitySpawner;
@@ -29,7 +32,7 @@ public partial class ServerEntityManager : InternalServerComponent
     {
         if (command is EntityRequestMessage entityRequest)
         {
-            SpawnEntity(++_entityIdCount, entityRequest.EntityType, (int)NetworkManagerEnet.AudienceMode.Broadcast, clientId);
+            SpawnEntity<Node3D>(entityRequest.EntityType, clientId);
         }
     }
 
@@ -55,10 +58,10 @@ public partial class ServerEntityManager : InternalServerComponent
     private GameSnapshotMessage PackSnapshot(int currentTick)
     {
         // Solve which entities we should include in this snapshot
-        List<IServerEntity> includedEntities = [];
+        List<IServerSyncedEntity> includedEntities = [];
         foreach (INetworkedEntity entity in _entitySpawner.Entities)
         {
-            if (entity is IServerEntity serverEntity)
+            if (entity is IServerSyncedEntity serverEntity)
             {
                 includedEntities.Add(serverEntity);
             }
@@ -66,6 +69,7 @@ public partial class ServerEntityManager : InternalServerComponent
 
         // Pack entity data into snapshot
         var entityCount = includedEntities.Count;
+        _lastEntitiesPacked = entityCount;
 
         var snapshot = new GameSnapshotMessage
         {
@@ -88,22 +92,25 @@ public partial class ServerEntityManager : InternalServerComponent
     /// <param name="entityType"></param>
     /// <param name="targetId"></param>
     /// <param name="authority"></param>
-    private void SpawnEntity(int entityId, byte entityType, int targetId, int authority)
+    public T SpawnEntity<T>(byte entityType, int authority, string metadata = "") where T : Node3D
     {
         var entityEvent = new EntityEventMessage
         {
             Event = EntityEventEnum.Created,
-            EntityId = entityId,
+            EntityId = ++_entityIdCount,
             EntityType = entityType,
-            Authority = authority
+            Authority = authority,
+            Metadata = metadata
         };
 
+        // TODO: this should be inside metadata
         // Execute event locally and retrieve position and rotation data
-        Node3D instancedEntity = _entitySpawner.SpawnEntity(entityEvent);
+        T instancedEntity = _entitySpawner.SpawnEntity(entityEvent) as T;
         entityEvent.Position = instancedEntity.Position;
-        //entityEvent.Rotation = instancedEntity.Rotation;
+        entityEvent.Yaw = instancedEntity.Rotation.Y;
 
-        SendCommandToClient(targetId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
+        SendCommandToClient((int)NetworkManagerEnet.AudienceMode.Broadcast, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
+        return instancedEntity;
     }
 
     /// <summary>
@@ -111,14 +118,15 @@ public partial class ServerEntityManager : InternalServerComponent
     /// </summary>
     /// <param name="entityId"></param>
     /// <param name="targetId"></param>
-    private void DestroyEntity(int entityId, int targetId)
+    public void DestroyEntity(int entityId, int targetId)
     {
         var entityEvent = new EntityEventMessage
         {
             Event = EntityEventEnum.Destroyed,
             EntityId = entityId,
             EntityType = 0,
-            Authority = 0
+            Authority = 0,
+            Metadata = ""
         };
 
         _entitySpawner.DestroyEntity(entityEvent);  // Execute event locally
@@ -140,10 +148,20 @@ public partial class ServerEntityManager : InternalServerComponent
                 EntityId = entity.EntityId,
                 EntityType = entity.EntityType,
                 Authority = entity.Authority,
+                Metadata = entity.Metadata
             };
 
             SendCommandToClient(clientId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
         }
 
+    }
+
+    public void DisplayDebugInformation()
+    {
+        if (ImGui.CollapsingHeader("Entity Manager"))
+        {
+            ImGui.Text($"Entity Count {_entityIdCount}");
+            ImGui.Text($"Entities Packed {_lastEntitiesPacked}");
+        }
     }
 }

@@ -7,10 +7,12 @@ namespace MonkeNet.Server;
 
 public partial class ServerManager : Node
 {
+    [Signal] public delegate void ServerReadyEventHandler();
     [Signal] public delegate void ServerTickEventHandler(int currentTick);
     [Signal] public delegate void ServerNetworkTickEventHandler(int currentTick);
     [Signal] public delegate void ClientConnectedEventHandler(int clientId);
     [Signal] public delegate void ClientDisconnectedEventHandler(int clientId);
+
     public delegate void CommandReceivedEventHandler(int clientId, IPackableMessage command); // Using a C# signal here because the Godot signal wouldn't accept NetworkMessages.IPackableMessage
     public event CommandReceivedEventHandler CommandReceived;
 
@@ -37,6 +39,22 @@ public partial class ServerManager : Node
     {
         _entityManager = GetNode<ServerEntityManager>("ServerEntityManager");
         _inputReceiver = GetNode<ServerInputReceiver>("ServerInputReceiver");
+    }
+
+    public void Initialize(INetworkManager networkManager, int port)
+    {
+        _networkManager = networkManager;
+
+        _serverClock = GetNode<ServerNetworkClock>("ServerNetworkClock");
+        _serverClock.NetworkProcessTick += OnNetworkProcess;
+
+        _networkManager.CreateServer(port);
+        _networkManager.ClientConnected += OnClientConnected;
+        _networkManager.ClientDisconnected += OnClientDisconnected;
+        _networkManager.PacketReceived += OnPacketReceived;
+
+        EmitSignal(SignalName.ServerReady);
+        GD.Print("Initialized Server Manager");
     }
 
     public override void _Process(double delta)
@@ -66,7 +84,7 @@ public partial class ServerManager : Node
     {
         foreach (var node in MonkeNetConfig.Instance.EntitySpawner.Entities)
         {
-            if (node is IServerEntity serverEntity)
+            if (node is IServerSyncedEntity serverEntity)
             {
                 IPackableElement input = _inputReceiver.GetInputForEntityTick(serverEntity, currentTick);
 
@@ -88,21 +106,6 @@ public partial class ServerManager : Node
         EmitSignal(SignalName.ServerNetworkTick, _currentTick);
     }
 
-    public void Initialize(INetworkManager networkManager, int port)
-    {
-        _networkManager = networkManager;
-
-        _serverClock = GetNode<ServerNetworkClock>("ServerNetworkClock");
-        _serverClock.NetworkProcessTick += OnNetworkProcess;
-
-        _networkManager.CreateServer(port);
-        _networkManager.ClientConnected += OnClientConnected;
-        _networkManager.ClientDisconnected += OnClientDisconnected;
-        _networkManager.PacketReceived += OnPacketReceived;
-
-        GD.Print("Initialized Server Manager");
-    }
-
     public void SendCommandToClient(int clientId, IPackableMessage command, INetworkManager.PacketModeEnum mode, int channel)
     {
         byte[] bin = MessageSerializer.Serialize(command);
@@ -112,6 +115,16 @@ public partial class ServerManager : Node
     public int GetNetworkId()
     {
         return _networkManager.GetNetworkId();
+    }
+
+    public T SpawnEntity<T>(byte entityType, int authority, string metadata = "") where T : Node3D
+    {
+        return _entityManager.SpawnEntity<T>(entityType, authority, metadata);
+    }
+
+    public void DestroyEntity(int entityId, int targetId)
+    {
+        _entityManager.DestroyEntity(entityId, targetId);
     }
 
     // Route received Input package to the correspondant Network ID
@@ -145,6 +158,7 @@ public partial class ServerManager : Node
             ImGui.Text($"Physics Tick {Engine.PhysicsTicksPerSecond}hz");
             _serverClock.DisplayDebugInformation();
             _inputReceiver.DisplayDebugInformation();
+            _entityManager.DisplayDebugInformation();
             ImGui.End();
         }
 

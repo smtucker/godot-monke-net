@@ -6,6 +6,8 @@ namespace MonkeNet.Shared;
 
 public abstract partial class EntitySpawner : Node
 {
+    public const int AuthorityServer = 0;
+
     [Signal] public delegate void EntitySpawnedEventHandler(Node3D entity);
 
     public static EntitySpawner Instance { get; private set; }
@@ -55,6 +57,7 @@ public abstract partial class EntitySpawner : Node
         AddChild(instancedNode);
         Entities.Add(networkedEntity);
         EmitSignal(SignalName.EntitySpawned, instancedNode);
+        networkedEntity.EntitySpawned();
         GD.Print($"Spawned entity:{@event.EntityId} ({@event.EntityType}) Auth:{@event.Authority}");
         return instancedNode;
     }
@@ -87,5 +90,6 @@ public abstract partial class EntitySpawner : Node
         entity.EntityId = @event.EntityId;
         entity.EntityType = @event.EntityType;
         entity.Authority = @event.Authority;
+        entity.Metadata = @event.Metadata;
     }
 }

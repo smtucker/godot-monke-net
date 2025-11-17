@@ -6,25 +6,35 @@ namespace GameDemo;
 
 public partial class MainScene : Node3D
 {
-    // When the client clicks "Spawn" we request the server to spawn a Player entity for us
-    private void OnSpawnButtonPressed()
-    {
-        ClientManager.Instance.MakeEntityRequest((byte)GameEntitySpawner.EntityType.Player);
-        GetNode("Menu/SpawnButton").QueueFree();
-    }
+	private static readonly string FLAG_DEDICATED_SERVER = "as_server";
 
-    // Creates game server
-    private void OnHostButtonPressed()
-    {
-        MonkeNetManager.Instance.CreateServer(9999);
-        GetNode("Menu").QueueFree();
-    }
+	public override void _Ready()
+	{
+		if (OS.HasFeature(FLAG_DEDICATED_SERVER))
+		{
+			MonkeNetManager.Instance.CreateServer(9999);
+		}
+	}
 
-    // Creates Client and connects to 
-    private void OnConnectButtonPressed()
-    {
-        MonkeNetManager.Instance.CreateClient("localhost", 9999);
-        GetNode("Menu/HostButton").QueueFree();
-        GetNode("Menu/ConnectButton").QueueFree();
-    }
+	// When the client clicks "Spawn" we request the server to spawn a Player entity for us
+	private void OnSpawnButtonPressed()
+	{
+		ClientManager.Instance.MakeEntityRequest((byte)GameEntitySpawner.EntityType.Player);
+		GetNode("Menu/SpawnButton").QueueFree();
+	}
+
+	// Creates game server
+	private void OnHostButtonPressed()
+	{
+		MonkeNetManager.Instance.CreateServer(9999);
+		GetNode("Menu").QueueFree();
+	}
+
+	// Creates Client and connects to 
+	private void OnConnectButtonPressed()
+	{
+		MonkeNetManager.Instance.CreateClient("localhost", 9999);
+		GetNode("Menu/HostButton").QueueFree();
+		GetNode("Menu/ConnectButton").QueueFree();
+	}
 }

@@ -7,11 +7,16 @@ namespace GameDemo;
 // Dummy player (other players in the game)
 public partial class DummyPlayer : Node3D, INetworkedEntity, IInterpolatedEntity
 {
+    [Export] private Node3D _skeleton;
     [Export] private AnimationTree _animTree;
 
     public int EntityId { get; set; }
     public byte EntityType { get; set; }
     public int Authority { get; set; }
+    public string Metadata { get; set; }
+
+    public void EntitySpawned()
+    { }
 
     // Called by the Snapshot Interpolator every frame, here you solve how to interpolate received states
     public void HandleStateInterpolation(IEntityStateData past, IEntityStateData future, float interpolationFactor)
@@ -24,7 +29,7 @@ public partial class DummyPlayer : Node3D, INetworkedEntity, IInterpolatedEntity
 
         // Interpolate Yaw
         var rotation = Mathf.LerpAngle(pastState.Yaw, futureState.Yaw, interpolationFactor);
-        this.Rotation = Vector3.Up * rotation;
+        _skeleton.Rotation = Vector3.Up * (rotation + Mathf.Pi);
 
         // Interpolate velocity
         Vector3 velocity = pastState.Velocity.Lerp(futureState.Velocity, interpolationFactor);

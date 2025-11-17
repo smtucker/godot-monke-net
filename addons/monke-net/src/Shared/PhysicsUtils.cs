@@ -45,4 +45,9 @@ public class PhysicsUtils
     {
         return (float)angle / byte.MaxValue * Mathf.Tau;
     }
+
+    public static bool EveryNSeconds(int tick, int seconds)
+    {
+        return tick % SecToTick(seconds) == 0;
+    }
 }
