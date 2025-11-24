@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using ImGuiNET;
 using MonkeNet.NetworkMessages;
 using MonkeNet.Serializer;
@@ -13,6 +14,7 @@ namespace MonkeNet.Client;
 [GlobalClass]
 public partial class ClientInputManager : InternalClientComponent
 {
+	[Export] private int _maxRedundantInputs = 3;
     private readonly List<ProducedInput> _producedInputs = [];
     private int _lastReceivedTick = 0;
 
@@ -39,18 +41,22 @@ public partial class ClientInputManager : InternalClientComponent
     // Pack and send current input + all non acked inputs (redundant inputs).
     private void SendInputsToServer(int currentTick)
     {
-        var userCmd = new PackedClientInputMessage
-        {
-            Tick = currentTick,
-            Inputs = new IPackableElement[_producedInputs.Count]
-        };
+		int redundantCount = Math.Min(_producedInputs.Count, _maxRedundantInputs);
+		if (redundantCount <= 0) return; // Don't send empty packets if buffer is cleared
 
-        for (int i = 0; i < _producedInputs.Count; i++)
-        {
-            userCmd.Inputs[i] = _producedInputs[i].Input;
-        }
-
-        SendCommandToServer(userCmd, INetworkManager.PacketModeEnum.Unreliable, (int)ChannelEnum.ClientInput);
+		var userCmd = new PackedClientInputMessage
+		{
+			Tick = currentTick,
+			Inputs = new IPackableElement[redundantCount]
+		};
+		// Copy the *last* 'redundantCount' items from _producedInputs
+		int startIndex = _producedInputs.Count - redundantCount;
+		for (int i = 0; i < redundantCount; i++)
+		{
+			// Ensure inputs are serializable copies if needed, though likely okay here
+			userCmd.Inputs[i] = _producedInputs[startIndex + i].Input;
+		}
+		SendCommandToServer(userCmd, INetworkManager.PacketModeEnum.Unreliable, (int)ChannelEnum.ClientInput);
     }
 
     // When we receive a snapshot back, we delete all inputs prior/equal to it since those were already processed.
