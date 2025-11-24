@@ -76,8 +76,8 @@ public partial class ServerManager : Node
 
         _inputReceiver.DropOutdatedInputs(_currentTick); // Delete all inputs that we don't need anymore
 
-        JoltPhysicsServer3D.GetSingleton().SpaceStep(MonkeNetManager.Instance.PhysicsSpace, PhysicsUtils.DeltaTime);
-        JoltPhysicsServer3D.GetSingleton().SpaceFlushQueries(MonkeNetManager.Instance.PhysicsSpace);
+        PhysicsServer3D.SpaceStep(MonkeNetManager.Instance.PhysicsSpace, PhysicsUtils.DeltaTime);
+        PhysicsServer3D.SpaceFlushQueries(MonkeNetManager.Instance.PhysicsSpace);
 
         _entityManager.SendSnapshotData(_currentTick);
     }
