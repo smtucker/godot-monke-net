@@ -26,6 +26,8 @@ public partial class ServerManager : Node
 
     private int _currentTick = 0;
 
+	public ServerEntityManager GetEntityManager() => _entityManager;
+
     public override void _EnterTree()
     {
         Instance = this;
