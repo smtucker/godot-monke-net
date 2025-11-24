@@ -109,17 +109,36 @@ public partial class SnapshotInterpolator : InternalClientComponent
 
     public void DisplayDebugInformation()
     {
-        if (ImGui.CollapsingHeader("Snapshot Interpolator"))
-        {
-            if (_interpolationFactor > 1) ImGui.PushStyleColor(ImGuiCol.Text, 0xFF0000FF);
-            ImGui.Text($"Interp. Factor {_interpolationFactor:0.00}");
-            ImGui.PopStyleColor();
+		if (ImGui.CollapsingHeader("Snapshot Interpolator"))
+		{
+			string interpFactorText;
+			if (double.IsNaN(_interpolationFactor) || double.IsInfinity(_interpolationFactor))
+			{
+				interpFactorText = "Interp. Factor: Invalid";
+			}
+			else
+			{
+				 // Apply color based on valid value if needed
+				 bool highlight = _interpolationFactor > 1.0 || _interpolationFactor < 0.0;
+				 if(highlight) ImGui.PushStyleColor(ImGuiCol.Text, 0xFF0000FF); // Red
+				 interpFactorText = $"Interp. Factor {_interpolationFactor:0.00}";
+				 if(highlight) ImGui.PopStyleColor();
+			}
+			ImGui.Text(interpFactorText);
 
-            ImGui.Text($"Buffer Size {_snapshotBuffer.Count} snapshots");
-            ImGui.Text($"Buffer Time {_bufferTime} ticks");
+			ImGui.Text($"Buffer Size {_snapshotBuffer.Count} snapshots");
+			ImGui.Text($"Buffer Time {_bufferTime} ticks");
 
-            int bufferTimeMs = (int)(_bufferTime * PhysicsUtils.DeltaTime * 1000);
-            ImGui.Text($"World State is {bufferTimeMs}ms in the past");
-        }
+			double bufferTimeMsDouble = _bufferTime * PhysicsUtils.DeltaTime * 1000.0;
+			if (bufferTimeMsDouble > int.MaxValue || bufferTimeMsDouble < int.MinValue || double.IsNaN(bufferTimeMsDouble) || double.IsInfinity(bufferTimeMsDouble))
+			{
+				 ImGui.Text("World State time: Invalid");
+			}
+			else
+			{
+				 int bufferTimeMs = (int)bufferTimeMsDouble;
+				 ImGui.Text($"World State is {bufferTimeMs}ms in the past");
+			}
+		}
     }
 }
