@@ -65,7 +65,7 @@ public abstract partial class EntitySpawner : Node
     public void DestroyEntity(EntityEventMessage @event)
     {
         var entity = GetNode<INetworkedEntity>(@event.EntityId.ToString());
-        entity.Free();
+        entity.QueueFree();
         Entities.Remove(entity);
     }
 

@@ -12,4 +12,5 @@ public interface INetworkedEntity
 
     public void Free();
     public void EntitySpawned();
+	public void QueueFree();
 }
