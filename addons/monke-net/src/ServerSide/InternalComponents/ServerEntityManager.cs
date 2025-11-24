@@ -148,6 +148,8 @@ public partial class ServerEntityManager : InternalServerComponent
                 EntityId = entity.EntityId,
                 EntityType = entity.EntityType,
                 Authority = entity.Authority,
+                Position = entity.Position,
+				Yaw = entity.Rotation.Y,
                 Metadata = entity.Metadata
             };
 
