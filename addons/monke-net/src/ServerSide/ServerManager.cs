@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 using ImGuiNET;
 using MonkeNet.Serializer;
 using MonkeNet.Shared;
@@ -98,6 +99,7 @@ public partial class ServerManager : Node
                 }
             }
         }
+		MonkeNetConfig.Instance.EntitySpawner.PurgeEntities();
     }
 
     private void OnTimerTimeout()

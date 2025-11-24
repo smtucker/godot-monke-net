@@ -13,6 +13,8 @@ public abstract partial class EntitySpawner : Node
     public static EntitySpawner Instance { get; private set; }
     public List<INetworkedEntity> Entities { get; private set; } = []; //TODO: make dictionary for easier access
 
+	private List<INetworkedEntity> _entitiesToDestroy = [];	
+
     protected abstract Node3D HandleEntityCreationClientSide(EntityEventMessage @event);
     protected abstract Node3D HandleEntityCreationServerSide(EntityEventMessage @event);
 
@@ -20,6 +22,16 @@ public abstract partial class EntitySpawner : Node
     {
         Instance = this;
     }
+
+	public void PurgeEntities()
+	{
+		foreach (INetworkedEntity entity in _entitiesToDestroy)
+        {
+            entity.QueueFree();
+			Entities.Remove(entity);
+        }
+        _entitiesToDestroy.Clear();
+	}
 
     //TODO: do not cast, make Entities a list of INetworkedEntity directly
     public INetworkedEntity GetEntityById(int entityId)
@@ -65,8 +77,9 @@ public abstract partial class EntitySpawner : Node
     public void DestroyEntity(EntityEventMessage @event)
     {
         var entity = GetNode<INetworkedEntity>(@event.EntityId.ToString());
-        entity.QueueFree();
-        Entities.Remove(entity);
+        // entity.QueueFree();
+        // Entities.Remove(entity);
+		_entitiesToDestroy.Add(entity);
     }
 
     public List<int> GetAllEntitiesByAuthority(int authority)
