@@ -22,6 +22,7 @@ public partial class ServerManager : Node
     private ServerNetworkClock _serverClock;
     private ServerEntityManager _entityManager;
     private ServerInputReceiver _inputReceiver;
+	private ServerHistoryManager _historyManager;
 
     private int _currentTick = 0;
 
@@ -39,6 +40,7 @@ public partial class ServerManager : Node
     {
         _entityManager = GetNode<ServerEntityManager>("ServerEntityManager");
         _inputReceiver = GetNode<ServerInputReceiver>("ServerInputReceiver");
+		_historyManager = GetNode<ServerHistoryManager>("ServerHistoryManager");
     }
 
     public void Initialize(INetworkManager networkManager, int port)
@@ -158,6 +160,7 @@ public partial class ServerManager : Node
             ImGui.Text($"Physics Tick {Engine.PhysicsTicksPerSecond}hz");
             _serverClock.DisplayDebugInformation();
             _inputReceiver.DisplayDebugInformation();
+			_historyManager.DisplayDebugInformation();
             _entityManager.DisplayDebugInformation();
             ImGui.End();
         }
