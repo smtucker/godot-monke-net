@@ -92,7 +92,7 @@ public partial class ServerEntityManager : InternalServerComponent
     /// <param name="entityType"></param>
     /// <param name="targetId"></param>
     /// <param name="authority"></param>
-    public T SpawnEntity<T>(byte entityType, int authority, string metadata = "") where T : Node3D
+    public T SpawnEntity<T>(byte entityType, int authority, string metadata = "", Vector3? position = null, float? yaw = null) where T : Node3D
     {
         var entityEvent = new EntityEventMessage
         {
@@ -103,9 +103,22 @@ public partial class ServerEntityManager : InternalServerComponent
             Metadata = metadata
         };
 
-        // TODO: this should be inside metadata
-        // Execute event locally and retrieve position and rotation data
+        // Spawner creates the entity with its default settings first.
         T instancedEntity = _entitySpawner.SpawnEntity(entityEvent) as T;
+
+        // If the director provided a specific position, override the spawner's default.
+        if (position.HasValue)
+        {
+            instancedEntity.Position = position.Value;
+        }
+        if (yaw.HasValue)
+        {
+            var rot = instancedEntity.Rotation;
+            rot.Y = yaw.Value;
+            instancedEntity.Rotation = rot;
+        }
+
+        // Now, read the FINAL position and include it in the message for all clients.
         entityEvent.Position = instancedEntity.Position;
         entityEvent.Yaw = instancedEntity.Rotation.Y;
 

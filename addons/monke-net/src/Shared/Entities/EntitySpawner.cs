@@ -104,5 +104,14 @@ public abstract partial class EntitySpawner : Node
         entity.EntityType = @event.EntityType;
         entity.Authority = @event.Authority;
         entity.Metadata = @event.Metadata;
+
+        // Apply position and rotation from the event. This is crucial for clients.
+        if (node is Node3D node3d)
+        {
+            node3d.Position = @event.Position;
+            var rot = node3d.Rotation;
+            rot.Y = @event.Yaw;
+            node3d.Rotation = rot;
+        }
     }
 }

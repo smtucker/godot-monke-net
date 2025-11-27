@@ -123,9 +123,9 @@ public partial class ServerManager : Node
         return _networkManager.GetNetworkId();
     }
 
-    public T SpawnEntity<T>(byte entityType, int authority, string metadata = "") where T : Node3D
+    public T SpawnEntity<T>(byte entityType, int authority, string metadata = "", Vector3? position = null, float? yaw = null) where T : Node3D
     {
-        return _entityManager.SpawnEntity<T>(entityType, authority, metadata);
+        return _entityManager.SpawnEntity<T>(entityType, authority, metadata, position, yaw);
     }
 
     public void DestroyEntity(int entityId, int targetId)
