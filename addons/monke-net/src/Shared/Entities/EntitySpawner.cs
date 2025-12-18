@@ -9,6 +9,7 @@ public abstract partial class EntitySpawner : Node
     public const int AuthorityServer = 0;
 
     [Signal] public delegate void EntitySpawnedEventHandler(Node3D entity);
+    [Signal] public delegate void EntityDiedEventHandler(Node3D entity);
 
     public static EntitySpawner Instance { get; private set; }
     public List<INetworkedEntity> Entities { get; private set; } = []; //TODO: make dictionary for easier access
@@ -81,6 +82,17 @@ public abstract partial class EntitySpawner : Node
         // Entities.Remove(entity);
 		_entitiesToDestroy.Add(entity);
     }
+	
+	public void KillEntity(EntityEventMessage @event)
+	{
+		GD.Print($"EntitySpawner: Death event for {@event.EntityId}");
+		var entity = GetNode<INetworkedEntity>(@event.EntityId.ToString());
+		if (entity is Node3D node3d)
+		{
+			EmitSignal(SignalName.EntityDied, node3d);
+		}
+		_entitiesToDestroy.Add(entity);
+	}
 
     public List<int> GetAllEntitiesByAuthority(int authority)
     {

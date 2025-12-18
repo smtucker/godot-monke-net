@@ -13,6 +13,10 @@ namespace MonkeNet.Server;
 [GlobalClass]
 public partial class ServerEntityManager : InternalServerComponent
 {
+	[Signal] public delegate void EntityCreatedEventHandler(int entityId, int clientId);
+	[Signal] public delegate void EntityDestroyedEventHandler(int entityId);
+	[Signal] public delegate void EntityKilledEventHandler(int entityId);
+	
     private EntitySpawner _entitySpawner;
     private int _entityIdCount = 0;
     private int _lastEntitiesPacked = 0;
@@ -104,7 +108,11 @@ public partial class ServerEntityManager : InternalServerComponent
         };
 
         // Spawner creates the entity with its default settings first.
-        T instancedEntity = _entitySpawner.SpawnEntity(entityEvent) as T;
+        if (_entitySpawner.SpawnEntity(entityEvent) is not T instancedEntity)
+        {
+            GD.PushError("ServerEntityManager: Failed to spawn entity of type " + entityType + "!");
+            return null;
+        }
 
         // If the director provided a specific position, override the spawner's default.
         if (position.HasValue)
@@ -122,6 +130,7 @@ public partial class ServerEntityManager : InternalServerComponent
         entityEvent.Position = instancedEntity.Position;
         entityEvent.Yaw = instancedEntity.Rotation.Y;
 
+		EmitSignal(SignalName.EntityCreated, entityEvent.EntityId, authority);
         SendCommandToClient((int)NetworkManagerEnet.AudienceMode.Broadcast, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
         return instancedEntity;
     }
@@ -144,9 +153,32 @@ public partial class ServerEntityManager : InternalServerComponent
 
         _entitySpawner.DestroyEntity(entityEvent);  // Execute event locally
 
+		EmitSignal(SignalName.EntityDestroyed, entityId);
         SendCommandToClient(targetId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
     }
 
+    /// <summary>
+    /// Notifies all clients that an Entity has died and it should process it's death before removal
+    /// </summary>
+    /// <param name="entityId"></param>
+    /// <param name="targetId"></param>
+    public void KillEntity(int entityId, int targetId)
+    {
+        var entityEvent = new EntityEventMessage
+        {
+            Event = EntityEventEnum.Death,
+            EntityId = entityId,
+            EntityType = 0,
+            Authority = 0,
+            Metadata = ""
+        };
+
+        _entitySpawner.KillEntity(entityEvent);  // Execute event locally
+
+		EmitSignal(SignalName.EntityKilled, entityId);
+        SendCommandToClient(targetId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
+    }
+	
     /// <summary>
     /// Sends the whole game state to a specific clientId, used when the client connects to replicate world state
     /// </summary>

@@ -7,7 +7,8 @@ namespace MonkeNet.NetworkMessages;
 public enum EntityEventEnum : byte //TODO: move somewhere else
 {
     Created,
-    Destroyed
+    Destroyed,
+	Death
 
 }
 public enum ChannelEnum : int
