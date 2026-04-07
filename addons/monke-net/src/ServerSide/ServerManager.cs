@@ -91,12 +91,20 @@ public partial class ServerManager : Node
         {
             if (node is IServerSyncedEntity serverEntity)
             {
-                IPackableElement input = _inputReceiver.GetInputForEntityTick(serverEntity, currentTick);
+				// Is a input producing player
+				if (serverEntity.EntityType == 0) // TODO: How do we abstract this away from game specific implementation?
+				{
+					IPackableElement input = _inputReceiver.GetInputForEntityTick(serverEntity, currentTick);
 
-                if (input != null)
-                {
-                    serverEntity.OnProcessTick(currentTick, input);
-                }
+					if (input != null)
+					{
+						serverEntity.OnProcessTick(currentTick, input);
+					}
+				}
+				else // Is not a player, and has no input. Server managed only.
+				{
+					serverEntity.OnProcessTick(currentTick, null!); // TODO: Lame null warning hack
+				}
             }
         }
 		MonkeNetConfig.Instance.EntitySpawner.PurgeEntities();
