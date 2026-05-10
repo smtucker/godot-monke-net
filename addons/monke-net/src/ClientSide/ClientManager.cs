@@ -70,9 +70,24 @@ public partial class ClientManager : Node
         PhysicsServer3D.SpaceStep(MonkeNetManager.Instance.PhysicsSpace, PhysicsUtils.DeltaTime);
         PhysicsServer3D.SpaceFlushQueries(MonkeNetManager.Instance.PhysicsSpace);
 
+
         // Register all local predictions
         _predictionManager.RegisterPrediction(currentTick, input);
     }
+
+	// Calls OnProcessTick on all entities
+	private static void EntitiesCallProcessTick(int currentTick, int remoteTick, IPackableElement input)
+	{
+		// TODO: Do we really need to iterate all entities when we only need input producers?
+		foreach (var node in MonkeNetConfig.Instance.EntitySpawner.Entities)
+		{
+			if (node is IClientEntity clientEntity)
+			{
+				clientEntity.OnProcessTick(currentTick, remoteTick, input);
+			}
+		}
+		MonkeNetConfig.Instance.EntitySpawner.PurgeEntities();
+	}
 
     public void Initialize(INetworkManager networkManager, string address, int port)
     {

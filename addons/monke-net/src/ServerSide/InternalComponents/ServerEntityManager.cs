@@ -13,6 +13,10 @@ namespace MonkeNet.Server;
 [GlobalClass]
 public partial class ServerEntityManager : InternalServerComponent
 {
+	[Signal] public delegate void EntityCreatedEventHandler(int entityId, int clientId);
+	[Signal] public delegate void EntityDestroyedEventHandler(int entityId);
+	[Signal] public delegate void EntityKilledEventHandler(int entityId);
+	
     private EntitySpawner _entitySpawner;
     private int _entityIdCount = 0;
     private int _lastEntitiesPacked = 0;
@@ -93,7 +97,7 @@ public partial class ServerEntityManager : InternalServerComponent
     /// <param name="entityType"></param>
     /// <param name="targetId"></param>
     /// <param name="authority"></param>
-    public T SpawnEntity<T>(byte entityType, int authority, string metadata = "") where T : Node3D
+    public T SpawnEntity<T>(byte entityType, int authority, string metadata = "", Vector3? position = null, float? yaw = null) where T : Node3D
     {
         var entityEvent = new EntityEventMessage
         {
@@ -104,12 +108,30 @@ public partial class ServerEntityManager : InternalServerComponent
             Metadata = metadata
         };
 
-        // TODO: this should be inside metadata
-        // Execute event locally and retrieve position and rotation data
-        T instancedEntity = _entitySpawner.SpawnEntity(entityEvent) as T;
+        // Spawner creates the entity with its default settings first.
+        if (_entitySpawner.SpawnEntity(entityEvent) is not T instancedEntity)
+        {
+            GD.PushError("ServerEntityManager: Failed to spawn entity of type " + entityType + "!");
+            return null;
+        }
+
+        // If the director provided a specific position, override the spawner's default.
+        if (position.HasValue)
+        {
+            instancedEntity.Position = position.Value;
+        }
+        if (yaw.HasValue)
+        {
+            var rot = instancedEntity.Rotation;
+            rot.Y = yaw.Value;
+            instancedEntity.Rotation = rot;
+        }
+
+        // Now, read the FINAL position and include it in the message for all clients.
         entityEvent.Position = instancedEntity.Position;
         entityEvent.Yaw = instancedEntity.Rotation.Y;
 
+		EmitSignal(SignalName.EntityCreated, entityEvent.EntityId, authority);
         SendCommandToClient((int)NetworkManagerEnet.AudienceMode.Broadcast, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
         return instancedEntity;
     }
@@ -132,9 +154,32 @@ public partial class ServerEntityManager : InternalServerComponent
 
         _entitySpawner.DestroyEntity(entityEvent);  // Execute event locally
 
+		EmitSignal(SignalName.EntityDestroyed, entityId);
         SendCommandToClient(targetId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
     }
 
+    /// <summary>
+    /// Notifies all clients that an Entity has died and it should process it's death before removal
+    /// </summary>
+    /// <param name="entityId"></param>
+    /// <param name="targetId"></param>
+    public void KillEntity(int entityId, int targetId)
+    {
+        var entityEvent = new EntityEventMessage
+        {
+            Event = EntityEventEnum.Death,
+            EntityId = entityId,
+            EntityType = 0,
+            Authority = 0,
+            Metadata = ""
+        };
+
+        _entitySpawner.KillEntity(entityEvent);  // Execute event locally
+
+		EmitSignal(SignalName.EntityKilled, entityId);
+        SendCommandToClient(targetId, entityEvent, INetworkManager.PacketModeEnum.Reliable, (int)ChannelEnum.EntityEvent);
+    }
+	
     /// <summary>
     /// Sends the whole game state to a specific clientId, used when the client connects to replicate world state
     /// </summary>
@@ -149,6 +194,8 @@ public partial class ServerEntityManager : InternalServerComponent
                 EntityId = entity.EntityId,
                 EntityType = entity.EntityType,
                 Authority = entity.Authority,
+                Position = entity.Position,
+				Yaw = entity.Rotation.Y,
                 Metadata = entity.Metadata
             };
 

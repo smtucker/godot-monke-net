@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 using ImGuiNET;
 using MonkeNet.Serializer;
 using MonkeNet.Shared;
@@ -22,8 +23,11 @@ public partial class ServerManager : Node
     private ServerNetworkClock _serverClock;
     private ServerEntityManager _entityManager;
     private ServerInputReceiver _inputReceiver;
+	private ServerHistoryManager _historyManager;
 
     private int _currentTick = 0;
+
+	public ServerEntityManager GetEntityManager() => _entityManager;
 
     public override void _EnterTree()
     {
@@ -39,6 +43,7 @@ public partial class ServerManager : Node
     {
         _entityManager = GetNode<ServerEntityManager>("ServerEntityManager");
         _inputReceiver = GetNode<ServerInputReceiver>("ServerInputReceiver");
+		_historyManager = GetNode<ServerHistoryManager>("ServerHistoryManager");
     }
 
     public void Initialize(INetworkManager networkManager, int port)
@@ -86,15 +91,16 @@ public partial class ServerManager : Node
         {
             if (node is NetworkBehaviour serverEntity)
             {
-                IPackableElement input = _inputReceiver.GetInputForEntityTick(serverEntity, currentTick);
+				IPackableElement input = _inputReceiver.GetInputForEntityTick(serverEntity, currentTick);
 
-                var serverStateSyncronizer = serverEntity.GetComponent<ServerStateSyncronizer>();
-                if (input != null && serverStateSyncronizer != null)
-                {
-                    serverStateSyncronizer.OnProcessTick(currentTick, input);
-                }
+				var serverStateSyncronizer = serverEntity.GetComponent<ServerStateSyncronizer>();
+				if (input != null && serverStateSyncronizer != null)
+				{
+					serverStateSyncronizer.OnProcessTick(currentTick, input);
+				}
             }
         }
+		MonkeNetConfig.Instance.EntitySpawner.PurgeEntities();
     }
 
     private void OnTimerTimeout()
@@ -118,9 +124,9 @@ public partial class ServerManager : Node
         return _networkManager.GetNetworkId();
     }
 
-    public T SpawnEntity<T>(byte entityType, int authority, string metadata = "") where T : Node3D
+    public T SpawnEntity<T>(byte entityType, int authority, string metadata = "", Vector3? position = null, float? yaw = null) where T : Node3D
     {
-        return _entityManager.SpawnEntity<T>(entityType, authority, metadata);
+        return _entityManager.SpawnEntity<T>(entityType, authority, metadata, position, yaw);
     }
 
     public void DestroyEntity(int entityId, int targetId)
@@ -159,6 +165,7 @@ public partial class ServerManager : Node
             ImGui.Text($"Physics Tick {Engine.PhysicsTicksPerSecond}hz");
             _serverClock.DisplayDebugInformation();
             _inputReceiver.DisplayDebugInformation();
+			_historyManager.DisplayDebugInformation();
             _entityManager.DisplayDebugInformation();
             ImGui.End();
         }

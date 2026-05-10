@@ -41,6 +41,9 @@ public partial class ClientEntityManager : InternalClientComponent
                 case EntityEventEnum.Destroyed:
                     _entitySpawner.DestroyEntity(entityEvent);
                     break;
+				case EntityEventEnum.Death:
+					_entitySpawner.KillEntity(entityEvent);
+					break;
                 default:
                     break;
             }
