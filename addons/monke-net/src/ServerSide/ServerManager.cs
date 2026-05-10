@@ -100,7 +100,7 @@ public partial class ServerManager : Node
 				}
             }
         }
-		MonkeNetConfig.Instance.EntitySpawner.PurgeEntities();
+		MonkeNetManager.Instance.EntitySpawner.PurgeEntities();
     }
 
     private void OnTimerTimeout()

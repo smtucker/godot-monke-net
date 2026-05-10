@@ -16,10 +16,7 @@ public partial class EntitySpawner : Node
     public static EntitySpawner Instance { get; private set; }
     public List<NetworkBehaviour> Entities { get; private set; } = []; //TODO: make dictionary for easier access
 
-	private List<INetworkedEntity> _entitiesToDestroy = [];	
-
-    protected abstract Node3D HandleEntityCreationClientSide(EntityEventMessage @event);
-    protected abstract Node3D HandleEntityCreationServerSide(EntityEventMessage @event);
+	private List<NetworkBehaviour> _entitiesToDestroy = [];	
 
     public override void _Ready()
     {
@@ -28,7 +25,7 @@ public partial class EntitySpawner : Node
 
 	public void PurgeEntities()
 	{
-		foreach (INetworkedEntity entity in _entitiesToDestroy)
+		foreach (NetworkBehaviour entity in _entitiesToDestroy)
         {
             entity.QueueFree();
 			Entities.Remove(entity);
@@ -81,7 +78,7 @@ public partial class EntitySpawner : Node
         //    Entities.Remove(entity);
         // throw new NotImplementedException();
 
-        var entity = GetNode<INetworkedEntity>(@event.EntityId.ToString());
+        var entity = GetNode<NetworkBehaviour>(@event.EntityId.ToString());
         // entity.QueueFree();
         // Entities.Remove(entity);
 		_entitiesToDestroy.Add(entity);
@@ -90,11 +87,14 @@ public partial class EntitySpawner : Node
 	public void KillEntity(EntityEventMessage @event)
 	{
 		GD.Print($"EntitySpawner: Death event for {@event.EntityId}");
-		var entity = GetNode<INetworkedEntity>(@event.EntityId.ToString());
-		if (entity is Node3D node3d)
-		{
-			EmitSignal(SignalName.EntityDied, node3d);
-		}
+		var entity = GetNode<NetworkBehaviour>(@event.EntityId.ToString());
+
+		EmitSignal(SignalName.EntityDied, entity);
+		// if (entity is Node3D node3d)
+		// {
+		// 	EmitSignal(SignalName.EntityDied, node3d);
+		// }
+		//
 		_entitiesToDestroy.Add(entity);
 	}
 

@@ -47,9 +47,9 @@ namespace MonkeNet.Server
 
             foreach (var entity in FindRewindableEntities())
             {
-                if (entity is Node3D entityNode3D && entity is INetworkedEntity networkedEntity)
+                if (entity is ServerNetworkBehaviour networkedEntity)
                 {
-                    currentTickStates[networkedEntity.EntityId] = new HistoricalState(entityNode3D.GlobalTransform);
+                    currentTickStates[networkedEntity.EntityId] = new HistoricalState(entity.GlobalTransform);
                 }
             }
 			_lastEntityCount = currentTickStates.Count;
@@ -104,17 +104,17 @@ namespace MonkeNet.Server
 
             foreach (var entity in FindRewindableEntities())
             {
-                if (entity is Node3D entityNode3D && entity is INetworkedEntity networkedEntity)
+                if (entity is ServerNetworkBehaviour networkedEntity)
                 {
 					// Clients see themselves as predicted, but other clients as interpolated
 					// so only rewind other entities. To get the estimated perspective of 
 					// the entity we were given.
 					if (networkedEntity.EntityId == entityId) continue;
-                    _originalTransforms[networkedEntity.EntityId] = entityNode3D.GlobalTransform;
+                    _originalTransforms[networkedEntity.EntityId] = entity.GlobalTransform;
                     HistoricalState? historicalState = GetStateAtTick(networkedEntity.EntityId, targetTick);
                     if (historicalState.HasValue)
                     {
-                        entityNode3D.GlobalTransform = new Transform3D(historicalState.Value.Rotation, historicalState.Value.Position);
+                        entity.GlobalTransform = new Transform3D(historicalState.Value.Rotation, historicalState.Value.Position);
                     }
                     else
                     {
@@ -141,9 +141,9 @@ namespace MonkeNet.Server
             _originalTransforms.Clear();
         }
 
-        private IEnumerable<INetworkedEntity> FindRewindableEntities()
+        private IEnumerable<NetworkBehaviour> FindRewindableEntities()
         {
-            var spawner = MonkeNetConfig.Instance?.EntitySpawner;
+            var spawner = MonkeNetManager.Instance?.EntitySpawner;
              if (spawner?.Entities == null)
                  yield break;
 
@@ -152,7 +152,7 @@ namespace MonkeNet.Server
             for(int i = 0; i < count; ++i)
             {
                 var entity = entities[i];
-                if (entity is IServerSyncedEntity)
+                if (entity is ServerNetworkBehaviour)
                 {
                     yield return entity;
                 }
@@ -161,7 +161,7 @@ namespace MonkeNet.Server
 
         private Node FindEntityNodeById(int entityId)
         {
-            var spawner = MonkeNetConfig.Instance?.EntitySpawner;
+            var spawner = MonkeNetManager.Instance?.EntitySpawner;
             return spawner?.GetNodeOrNull($"{entityId}");
 
             // Alternative loop-based approach (also LINQ-free) if names don't match IDs:

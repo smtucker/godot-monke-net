@@ -12,6 +12,10 @@ public partial class NetworkBehaviour : MonkeNetNode
     public int Authority { get; set; }
     public string Metadata { get; set; }
 
+	public Vector3 Position { get; set; } // From Node3D
+	public Vector3 Rotation { get; set; } // From Node3D
+	public Transform3D GlobalTransform { get; set; } // From Node3D
+
     public virtual void OnEntityRemoved() { }
     public virtual void OnEntitySpawned() { }
 }

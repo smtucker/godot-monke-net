@@ -17,6 +17,11 @@ public abstract partial class InputProducerComponent : ClientComponent
         Current = true;
     }
 
+	public override void _ExitTree()
+	{
+		if (MonkeNetConfig.Instance.InputProducer == this) { MonkeNetConfig.Instance.InputProducer = null!; }
+	}
+
     /// <summary>
     /// Return IPackableElement with input data.
     /// </summary>
